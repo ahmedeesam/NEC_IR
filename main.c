@@ -14,6 +14,7 @@
 #include "timer0.h"
 #include "timer1.h"
 #include "lcd.h"
+#include "send_fun.h"
 
 
 
@@ -196,107 +197,27 @@ int main(void)
 		reverse(&puls_comp.address_);
 		reverse(&puls_comp.address_INV);
 		reverse(&puls_comp.command_);
-		reverse(&puls_comp.command_INV);		
-		
-		for (char k = 0;k <= 5;k++)
-		{
-			if (k == 0)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("address");
-				/*lcd_goto_xy(1,10);
-				itoa(a,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(a1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.address_,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);	
-			} 
-			else if (k == 1)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("address_INV");
-				/*lcd_goto_xy(1,10);
-				itoa(b,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(b1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.address_INV,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);
-			}
-			else if (k == 2)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("command");
-				/*lcd_goto_xy(1,10);
-				itoa(c,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(c1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.command_,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);
-			}
-			else if (k == 3)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("command_INV");
-				/*lcd_goto_xy(1,10);
-				itoa(d,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(d1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.command_INV,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);
-			}
-			else if (k == 4)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				if (puls_comp.start1 == 1)
-				{
-					lcd_write_word("start1 here");
-				} 
-				else if (puls_comp.start1 == 0)
-				{
-					lcd_write_word("no start1");
-				}
-				_delay_ms(500);
-			}
-			else if (k == 5)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				if (puls_comp.start2 == 1)
-				{
-					lcd_write_word("start2 here");
-				}
-				else if (puls_comp.start2 == 0)
-				{
-					lcd_write_word("no start2");
-				}
-				_delay_ms(500);
-			}
+		reverse(&puls_comp.command_INV);
+				
+			start_tim0_38khz();          //start 38461khz with dutycycle 50% ,time interval 13us
+			lcd_clear();
+			lcd_goto_xy(0,0);
+			lcd_write_word("sending");	
+			_delay_ms(200);
+			
+			send_start_bit();
+			send_8bits(puls_comp.address_);
+			send_8bits(puls_comp.address_INV);
+			send_8bits(puls_comp.command_);
+			send_8bits(puls_comp.command_INV);
+			send_end_bit();	
+
+			stop_tim0_38khz();
+			puls_num = 0;
+			bit_num = 0;
 		}
-		puls_num = 0;
-		bit_num = 0;
 	}
-}
+
 
 
 	/*	if (puls_comp.start1 == 1)
