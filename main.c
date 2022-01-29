@@ -13,7 +13,8 @@
 #include "ext_int.h"
 #include "timer0.h"
 #include "timer1.h"
-#include "lcd.h"
+#include "send_fun.h"
+#include "uart.h"
 
 
 
@@ -43,16 +44,12 @@ ISR (INT0_vect)
 			if ((puls_time > 1100) && (puls_time < 1400) )  //1250 for LOW +- 50 timing error
 			{
 				puls_comp.address_ = (puls_comp.address_ << 1);
-				/*puls_comp.address_ &= ~(1 << 7);
-				puls_comp.address_ = (puls_comp.address_ >> 1);
-				a++;*/
+				serial_debug("0");
 			}
 			else if ((puls_time > 2200) && (puls_time < 2300) )  //2250 for HIGH +- 50 timing error
 			{
 				puls_comp.address_ = (puls_comp.address_ << 1)|(0x01);
-				/*puls_comp.address_ |= (1 << 7);
-				puls_comp.address_ = (puls_comp.address_ >> 1);
-				a1++;*/
+				serial_debug("1");
 			}
 			bit_num++;
 			
@@ -62,16 +59,12 @@ ISR (INT0_vect)
 			if ((puls_time > 1100) && (puls_time < 1400) )  //1250 for LOW +- 50 timing error
 			{
 				puls_comp.address_INV = (puls_comp.address_INV << 1);
-				/*puls_comp.address_INV &= ~(1 << 7);
-				puls_comp.address_INV = (puls_comp.address_ >> 1);
-				b++;*/
+				serial_debug("0");
 			}
 			else if ((puls_time > 2200) && (puls_time < 2300) )  //2250 for HIGH +- 50 timing error
 			{
 				puls_comp.address_INV = (puls_comp.address_INV << 1)|(0x01);
-				/*puls_comp.address_INV |= (1 << 7);
-				puls_comp.address_INV = (puls_comp.address_ >> 1);
-				b1++;*/
+				serial_debug("1");
 			}
 			bit_num++;
 			
@@ -81,16 +74,12 @@ ISR (INT0_vect)
 			if ((puls_time > 1100) && (puls_time < 1400) )  //1250 for LOW +- 50 timing error
 			{
 				puls_comp.command_ = (puls_comp.command_ << 1);
-				/*puls_comp.command_ &= ~(1 << 7);
-				puls_comp.command_ = (puls_comp.address_ >> 1);
-				c++;*/
+				serial_debug("0");
 			}
 			else if ((puls_time > 2200) && (puls_time < 2300) )  //2250 for HIGH +- 50 timing error
 			{
 				puls_comp.command_ = (puls_comp.command_ << 1)|(0x01);
-				/*puls_comp.command_ |= (1 << 7);
-				puls_comp.command_ = (puls_comp.address_ >> 1);
-				c1++;*/
+				serial_debug("1");
 			}
 			bit_num++;
 			
@@ -100,16 +89,12 @@ ISR (INT0_vect)
 			if ((puls_time > 1100) && (puls_time < 1400) )  //1250 for LOW +- 50 timing error
 			{
 				puls_comp.command_INV = (puls_comp.command_INV << 1);
-				/*puls_comp.command_INV &= ~(1 << 7);
-				puls_comp.command_INV = (puls_comp.address_ >> 1);
-				d++;*/
+				serial_debug("0");
 			}
 			else if ((puls_time > 2200) && (puls_time < 2300) )  //2250 for HIGH +- 50 timing error
 			{
 				puls_comp.command_INV = (puls_comp.command_INV << 1)|(0x01);
-				/*puls_comp.command_INV |= (1 << 7);
-				puls_comp.command_INV = (puls_comp.address_ >> 1);
-				d1++;*/
+				serial_debug("1");
 			}
 			bit_num++;
 			
@@ -131,7 +116,7 @@ ISR (INT1_vect)
 	int1_STOP();
 }
 
-ISR (TIMER0_COMPA_vect)
+/*ISR (TIMER0_COMPA_vect)
 {
 	g = ~g;
 	if (g == 0)
@@ -143,161 +128,77 @@ ISR (TIMER0_COMPA_vect)
 		PORTC |= (1<<PORTC0);
 	}
 	
-}
+}*/
 
-void reverse(int *b) {
-	*b = (((*b & 0xF0) >> 4) | ((*b & 0x0F) << 4));
-	*b = (((*b & 0xCC) >> 2) | ((*b & 0x33) << 2));
-	*b = (((*b & 0xAA) >> 1) | ((*b & 0x55) << 1));
+int reverse(int b) {
+	b = (((b & 0xF0) >> 4) | ((b & 0x0F) << 4));
+	b = (((b & 0xCC) >> 2) | ((b & 0x33) << 2));
+	b = (((b & 0xAA) >> 1) | ((b & 0x55) << 1));
+	return b;
 }
 
 int main(void)
 {
-	DDRC |= ((1<<PORTC0)|(1<<PORTC1));
-	lcd_init();
-	lcd_send_command(LCD_CMD_DISPLAY_NO_CURSOR);
-	int0_START();
-	int1_init();
-
+	_delay_ms(3000);
+	DDRD |= (1<<PORTD6);
+	uart_init();
+	          //start 38461khz with dutycycle 50% ,time interval 13us ,on OC0A pin without interrupt
+	//sei();
 	 
 	while (1)
 	{	
+		/*int0_START();
 		int1_init();
 		
-		/*a = 0;
-		b = 0;
-		c = 0;
-		d = 0;
-		a1 = 0;
-		b1 = 0;
-		c1 = 0;
-		d1 = 0;*/
+		_delay_ms(300);
+			
+		serial_debug("signal");
+		signal_num++;
+		itoa(signal_num,buffer2,9);	
+		serial_debug(buffer2);
+		serial_debug(":");
 		
+		while(!(TIFR1 & (1<<TOV1)));     //wait until stop receiving, timer1 overflow works good
+
+		int0_STOP();
+		int1_STOP();
+		
+		TIFR1 = (1<<TOV1);          //clear timer1 overflow flag
+		trash =  read_tim1();                //stop timer1
+		
+		puls_comp.address_    = reverse(puls_comp.address_);
+		puls_comp.address_INV = reverse(puls_comp.address_INV);
+		puls_comp.command_    = reverse(puls_comp.command_);
+		puls_comp.command_INV = reverse(puls_comp.command_INV);*/
+			
+		serial_debug("sending");	
+		_delay_ms(1500);
+		send_start_bit(); 
+		send_8bits(0x00); 
+		send_8bits(0x7F);
+		send_8bits(0x0A);
+		send_8bits(0xF5);
+		send_end_bit();
+		
+		/*puls_num = 0;
+		bit_num = 0;
 		puls_comp.start1 = 0;
 		puls_comp.start2 = 0;
 		puls_comp.address_ = 0;
 		puls_comp.address_INV = 0;
 		puls_comp.command_ = 0;
-		puls_comp.command_INV = 0;
+		puls_comp.command_INV = 0;*/
 		
-		sei();
-		lcd_clear();                         //open global interrupts
-		lcd_goto_xy(0,0);
-		lcd_write_word("signal:");
-		signal_num++;
-		itoa(signal_num,buffer2,9);	/* int to string conversion */
-		lcd_write_word(buffer2);
-		
-		while(!(TIFR1 & (1<<TOV1)));     //wait until stop receiving, timer1 overflow works good
-		cli();                            //disable global interrupts ,to not disrupting sending
-		TIFR1 = (1<<TOV1);          //clear timer1 overflow flag
-		trash =  read_tim1();                //stop timer1
-		
-		reverse(&puls_comp.address_);
-		reverse(&puls_comp.address_INV);
-		reverse(&puls_comp.command_);
-		reverse(&puls_comp.command_INV);		
-		
-		for (char k = 0;k <= 5;k++)
-		{
-			if (k == 0)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("address");
-				/*lcd_goto_xy(1,10);
-				itoa(a,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(a1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.address_,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);	
-			} 
-			else if (k == 1)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("address_INV");
-				/*lcd_goto_xy(1,10);
-				itoa(b,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(b1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.address_INV,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);
-			}
-			else if (k == 2)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("command");
-				/*lcd_goto_xy(1,10);
-				itoa(c,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(c1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.command_,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);
-			}
-			else if (k == 3)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				lcd_write_word("command_INV");
-				/*lcd_goto_xy(1,10);
-				itoa(d,buffer2,9);
-				lcd_write_word(buffer2);
-				lcd_goto_xy(1,0);
-				itoa(d1,buffer2,9);
-				lcd_write_word(buffer2);*/
-				lcd_goto_xy(1,0);
-				itoa(puls_comp.command_INV,buffer1,13);
-				lcd_write_word(buffer1);
-				_delay_ms(500);
-			}
-			else if (k == 4)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				if (puls_comp.start1 == 1)
-				{
-					lcd_write_word("start1 here");
-				} 
-				else if (puls_comp.start1 == 0)
-				{
-					lcd_write_word("no start1");
-				}
-				_delay_ms(500);
-			}
-			else if (k == 5)
-			{
-				lcd_clear();
-				lcd_goto_xy(0,0);
-				if (puls_comp.start2 == 1)
-				{
-					lcd_write_word("start2 here");
-				}
-				else if (puls_comp.start2 == 0)
-				{
-					lcd_write_word("no start2");
-				}
-				_delay_ms(500);
-			}
 		}
-		puls_num = 0;
-		bit_num = 0;
 	}
-}
 
+		/*
+				send_start_bit();
+				send_8bits(puls_comp.address_);
+				send_8bits(puls_comp.address_INV);
+				send_8bits(puls_comp.command_);
+				send_8bits(puls_comp.command_INV);
+	*/
 
 	/*	if (puls_comp.start1 == 1)
 		{
@@ -311,3 +212,21 @@ int main(void)
 			lcd_write_word("start 2!");
 			_delay_ms(500);
 		}*/
+	
+			/*serial_debug("address:");
+		itoa(puls_comp.address_,buffer1,13);
+		serial_debug(buffer1);
+		
+		serial_debug("address_INV:");
+		itoa(puls_comp.address_INV,buffer1,13);
+		serial_debug(buffer1);
+		
+		serial_debug("command:");
+		itoa(puls_comp.command_,buffer1,13);
+		serial_debug(buffer1);
+		
+		serial_debug("command_INV:");
+		itoa(puls_comp.command_INV,buffer1,13);
+		serial_debug(buffer1);*/
+			
+		//while(puls_comp.start1 == 0);
