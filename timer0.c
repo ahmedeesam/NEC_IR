@@ -10,9 +10,9 @@
 void start_tim0_38khz()
 {
 	TCNT0   = 0x00;
-	OCR0A   = 13;
-	TCCR0A |= (1<<WGM01);
-	TIMSK0 |= (1<<OCIE0A);
+	OCR0A   = 0xD;
+	TCCR0A |= ((1<<WGM01)|(1<<COM0A0));
+	//TIMSK0 |= (1<<OCIE0A);
 	TCCR0B |= (1<<CS01);
 }
 
